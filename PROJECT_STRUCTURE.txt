@@ -1,0 +1,515 @@
+================================================================================
+VRMS (Vehicle Registration Management System) - PROJECT STRUCTURE
+================================================================================
+Technology Stack: Spring Boot 4.0.2, Java 17, H2/PostgreSQL, Flyway, Gradle
+Architecture: Hexagonal Architecture (Ports & Adapters) with DDD principles
+================================================================================
+
+vrms/
+│
+├── build.gradle                          # Gradle build configuration
+├── settings.gradle                       # Gradle settings
+├── gradlew                               # Gradle wrapper (Unix)
+├── gradlew.bat                           # Gradle wrapper (Windows)
+├── README.md                             # Project documentation
+├── HELP.md                               # Spring Boot help
+├── .gitignore                            # Git ignore rules
+├── .gitattributes                        # Git attributes
+│
+├── gradle/
+│   └── wrapper/
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── champsoft/
+│   │   │           └── vrms/
+│   │   │               │
+│   │   │               ├── VrmsApplication.java              # Main Spring Boot Application
+│   │   │               │
+│   │   │               ├── shared/                           # Shared/Common Components
+│   │   │               │   ├── config/
+│   │   │               │   │   ├── OpenApiConfig.java       # Swagger/OpenAPI configuration
+│   │   │               │   │   ├── OpenApiGroupsConfig.java # API grouping configuration
+│   │   │               │   │   └── WebConfig.java           # Web configuration
+│   │   │               │   │
+│   │   │               │   └── web/
+│   │   │               │       ├── ApiErrorResponse.java    # Standard error response DTO
+│   │   │               │       └── GlobalExceptionHandler.java # Global exception handler
+│   │   │               │
+│   │   │               ├── modules/                          # Bounded Contexts/Modules
+│   │   │               │   │
+│   │   │               │   ├── cars/                         # CARS MODULE (Vehicle Management)
+│   │   │               │   │   ├── domain/                   # Domain Layer
+│   │   │               │   │   │   ├── model/
+│   │   │               │   │   │   │   ├── Vehicle.java         # Aggregate Root
+│   │   │               │   │   │   │   ├── VehicleId.java       # Value Object (ID)
+│   │   │               │   │   │   │   ├── Vin.java             # Value Object (VIN)
+│   │   │               │   │   │   │   ├── VehicleSpecs.java    # Value Object (Specs)
+│   │   │               │   │   │   │   └── VehicleStatus.java   # Enum (INACTIVE, ACTIVE)
+│   │   │               │   │   │   │
+│   │   │               │   │   │   └── exception/
+│   │   │               │   │   │       ├── InvalidVinException.java
+│   │   │               │   │   │       ├── InvalidVehicleYearException.java
+│   │   │               │   │   │       ├── VehicleAlreadyActiveException.java
+│   │   │               │   │   │       └── VehicleNotValidatedException.java
+│   │   │               │   │   │
+│   │   │               │   │   ├── application/               # Application Layer
+│   │   │               │   │   │   ├── port/
+│   │   │               │   │   │   │   └── out/
+│   │   │               │   │   │   │       └── VehicleRepositoryPort.java  # Output Port (Interface)
+│   │   │               │   │   │   │
+│   │   │               │   │   │   ├── service/
+│   │   │               │   │   │   │   ├── VehicleCrudService.java        # CRUD operations
+│   │   │               │   │   │   │   └── VehicleEligibilityService.java # Eligibility check
+│   │   │               │   │   │   │
+│   │   │               │   │   │   └── exception/
+│   │   │               │   │   │       ├── VehicleNotFoundException.java
+│   │   │               │   │   │       └── DuplicateVinException.java
+│   │   │               │   │   │
+│   │   │               │   │   ├── infrastructure/            # Infrastructure Layer
+│   │   │               │   │   │   └── persistence/
+│   │   │               │   │   │       ├── VehicleJpaEntity.java             # JPA Entity
+│   │   │               │   │   │       ├── SpringDataVehicleRepository.java  # Spring Data JPA Repository
+│   │   │               │   │   │       └── JpaVehicleRepositoryAdapter.java  # Repository Adapter (implements port)
+│   │   │               │   │   │
+│   │   │               │   │   └── api/                      # API Layer (Input Adapters)
+│   │   │               │   │       ├── VehicleController.java          # REST Controller
+│   │   │               │   │       ├── VehicleExceptionHandler.java    # Module-specific exception handler
+│   │   │               │   │       │
+│   │   │               │   │       ├── dto/
+│   │   │               │   │       │   ├── CreateVehicleRequest.java
+│   │   │               │   │       │   ├── UpdateVehicleRequest.java
+│   │   │               │   │       │   └── VehicleResponse.java
+│   │   │               │   │       │
+│   │   │               │   │       └── mapper/
+│   │   │               │   │           └── VehicleApiMapper.java         # Domain <-> DTO mapper
+│   │   │               │   │
+│   │   │               │   ├── owners/                        # OWNERS MODULE (Owner Management)
+│   │   │               │   │   ├── domain/                    # Domain Layer
+│   │   │               │   │   │   ├── model/
+│   │   │               │   │   │   │   ├── Owner.java            # Aggregate Root
+│   │   │               │   │   │   │   ├── OwnerId.java          # Value Object (ID)
+│   │   │               │   │   │   │   ├── FullName.java         # Value Object
+│   │   │               │   │   │   │   ├── Address.java          # Value Object
+│   │   │               │   │   │   │   └── OwnerStatus.java      # Enum (INACTIVE, ACTIVE, SUSPENDED)
+│   │   │               │   │   │   │
+│   │   │               │   │   │   └── exception/
+│   │   │               │   │   │       ├── InvalidOwnerNameException.java
+│   │   │               │   │   │       ├── InvalidAddressException.java
+│   │   │               │   │   │       └── OwnerNotEligibleException.java
+│   │   │               │   │   │
+│   │   │               │   │   ├── application/                # Application Layer
+│   │   │               │   │   │   ├── port/
+│   │   │               │   │   │   │   └── out/
+│   │   │               │   │   │   │       └── OwnerRepositoryPort.java  # Output Port
+│   │   │               │   │   │   │
+│   │   │               │   │   │   ├── service/
+│   │   │               │   │   │   │   ├── OwnerCrudService.java
+│   │   │               │   │   │   │   └── OwnerEligibilityService.java
+│   │   │               │   │   │   │
+│   │   │               │   │   │   └── exception/
+│   │   │               │   │   │       ├── OwnerNotFoundException.java
+│   │   │               │   │   │       └── DuplicateOwnerException.java
+│   │   │               │   │   │
+│   │   │               │   │   ├── infrastructure/             # Infrastructure Layer
+│   │   │               │   │   │   └── persistence/
+│   │   │               │   │   │       ├── OwnerJpaEntity.java
+│   │   │               │   │   │       ├── SpringDataOwnerRepository.java
+│   │   │               │   │   │       └── JpaOwnerRepositoryAdapter.java
+│   │   │               │   │   │
+│   │   │               │   │   └── api/                       # API Layer
+│   │   │               │   │       ├── OwnerController.java
+│   │   │               │   │       ├── OwnerExceptionHandler.java
+│   │   │               │   │       │
+│   │   │               │   │       ├── dto/
+│   │   │               │   │       │   ├── CreateOwnerRequest.java
+│   │   │               │   │       │   ├── UpdateOwnerRequest.java
+│   │   │               │   │       │   └── OwnerResponse.java
+│   │   │               │   │       │
+│   │   │               │   │       └── mapper/
+│   │   │               │   │           └── OwnerApiMapper.java
+│   │   │               │   │
+│   │   │               │   ├── agents/                        # AGENTS MODULE (Agent Management)
+│   │   │               │   │   ├── domain/                    # Domain Layer
+│   │   │               │   │   │   ├── model/
+│   │   │               │   │   │   │   ├── Agent.java            # Aggregate Root
+│   │   │               │   │   │   │   ├── AgentId.java          # Value Object (ID)
+│   │   │               │   │   │   │   ├── Role.java             # Enum (CLERK, SUPERVISOR)
+│   │   │               │   │   │   │   └── AgentStatus.java      # Enum (INACTIVE, ACTIVE)
+│   │   │               │   │   │   │
+│   │   │               │   │   │   └── exception/
+│   │   │               │   │   │       ├── InvalidRoleException.java
+│   │   │               │   │   │       ├── InvalidAgentNameException.java
+│   │   │               │   │   │       └── AgentNotEligibleException.java
+│   │   │               │   │   │
+│   │   │               │   │   ├── application/                # Application Layer
+│   │   │               │   │   │   ├── port/
+│   │   │               │   │   │   │   └── out/
+│   │   │               │   │   │   │       └── AgentRepositoryPort.java
+│   │   │               │   │   │   │
+│   │   │               │   │   │   ├── service/
+│   │   │               │   │   │   │   ├── AgentCrudService.java
+│   │   │               │   │   │   │   └── AgentEligibilityService.java
+│   │   │               │   │   │   │
+│   │   │               │   │   │   └── exception/
+│   │   │               │   │   │       ├── AgentNotFoundException.java
+│   │   │               │   │   │       └── DuplicateAgentException.java
+│   │   │               │   │   │
+│   │   │               │   │   ├── infrastructure/             # Infrastructure Layer
+│   │   │               │   │   │   └── persistence/
+│   │   │               │   │   │       ├── AgentJpaEntity.java
+│   │   │               │   │   │       ├── SpringDataAgentRepository.java
+│   │   │               │   │   │       └── JpaAgentRepositoryAdapter.java
+│   │   │               │   │   │
+│   │   │               │   │   └── api/                       # API Layer
+│   │   │               │   │       ├── AgentController.java
+│   │   │               │   │       ├── AgentExceptionHandler.java
+│   │   │               │   │       │
+│   │   │               │   │       ├── dto/
+│   │   │               │   │       │   ├── CreateAgentRequest.java
+│   │   │               │   │       │   ├── UpdateAgentRequest.java
+│   │   │               │   │       │   └── AgentResponse.java
+│   │   │               │   │       │
+│   │   │               │   │       └── mapper/
+│   │   │               │   │           └── AgentApiMapper.java
+│   │   │               │   │
+│   │   │               │   └── registration/                  # REGISTRATION MODULE (Core Orchestration)
+│   │   │               │       ├── domain/                    # Domain Layer
+│   │   │               │       │   ├── model/
+│   │   │               │       │   │   ├── Registration.java      # Aggregate Root
+│   │   │               │       │   │   ├── RegistrationId.java    # Value Object (ID)
+│   │   │               │       │   │   ├── VehicleRef.java        # Reference to Vehicle
+│   │   │               │       │   │   ├── OwnerRef.java          # Reference to Owner
+│   │   │               │       │   │   ├── AgentRef.java          # Reference to Agent
+│   │   │               │       │   │   ├── PlateNumber.java       # Value Object
+│   │   │               │       │   │   ├── ExpiryDate.java        # Value Object
+│   │   │               │       │   │   └── RegistrationStatus.java # Enum (ACTIVE, CANCELLED)
+│   │   │               │       │   │
+│   │   │               │       │   └── exception/
+│   │   │               │       │       ├── InvalidPlateException.java
+│   │   │               │       │       ├── ExpiryDateMustBeFutureException.java
+│   │   │               │       │       └── RegistrationNotActiveException.java
+│   │   │               │       │
+│   │   │               │       ├── application/                # Application Layer
+│   │   │               │       │   ├── port/
+│   │   │               │       │   │   └── out/
+│   │   │               │       │   │       ├── RegistrationRepositoryPort.java
+│   │   │               │       │   │       ├── VehicleEligibilityPort.java  # ACL Port
+│   │   │               │       │   │       ├── OwnerEligibilityPort.java    # ACL Port
+│   │   │               │       │   │       └── AgentEligibilityPort.java    # ACL Port
+│   │   │               │       │   │
+│   │   │               │       │   ├── service/
+│   │   │               │       │   │   ├── RegistrationCrudService.java
+│   │   │               │       │   │   └── RegistrationOrchestrator.java  # Orchestrates cross-module operations
+│   │   │               │       │   │
+│   │   │               │       │   └── exception/
+│   │   │               │       │       ├── RegistrationNotFoundException.java
+│   │   │               │       │       ├── PlateAlreadyTakenException.java
+│   │   │               │       │       └── CrossContextValidationException.java
+│   │   │               │       │
+│   │   │               │       ├── infrastructure/             # Infrastructure Layer
+│   │   │               │       │   ├── persistence/
+│   │   │               │       │   │   ├── RegistrationJpaEntity.java
+│   │   │               │       │   │   ├── SpringDataRegistrationRepository.java
+│   │   │               │       │   │   └── JpaRegistrationRepositoryAdapter.java
+│   │   │               │       │   │
+│   │   │               │       │   └── acl/                    # Anti-Corruption Layer (ACL)
+│   │   │               │       │       ├── VehicleEligibilityAdapter.java  # Adapts to Cars module
+│   │   │               │       │       ├── OwnerEligibilityAdapter.java    # Adapts to Owners module
+│   │   │               │       │       └── AgentEligibilityAdapter.java    # Adapts to Agents module
+│   │   │               │       │
+│   │   │               │       └── api/                       # API Layer
+│   │   │               │           ├── RegistrationController.java
+│   │   │               │           ├── RegistrationExceptionHandler.java
+│   │   │               │           │
+│   │   │               │           ├── dto/
+│   │   │               │           │   ├── RegisterVehicleRequest.java
+│   │   │               │           │   ├── RenewRegistrationRequest.java
+│   │   │               │           │   ├── CancelRegistrationRequest.java
+│   │   │               │           │   └── RegistrationResponse.java
+│   │   │               │           │
+│   │   │               │           └── mapper/
+│   │   │               │               └── RegistrationApiMapper.java
+│   │   │               │
+│   │   └── resources/
+│   │       ├── application.yml                # Application configuration
+│   │       │
+│   │       ├── db/
+│   │       │   └── migration/
+│   │       │       └── V1__init.sql           # Flyway migration script
+│   │       │
+│   │       ├── static/                        # Static resources
+│   │       └── templates/                     # Templates (if needed)
+│   │
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── champsoft/
+│                   └── vrms/
+│                       └── VrmsApplicationTests.java
+│
+├── build/                                     # Build output directory
+│   ├── classes/
+│   │   └── java/
+│   │       └── main/
+│   │           └── com/
+│   │               └── champsoft/
+│   │                   └── vrms/
+│   │                       └── [compiled .class files]
+│   │
+│   ├── resources/
+│   │   └── main/
+│   │       ├── application.yml
+│   │       └── db/
+│   │           └── migration/
+│   │               └── V1__init.sql
+│   │
+│   ├── reports/
+│   │   └── problems/
+│   │       └── problems-report.html
+│   │
+│   └── tmp/
+│       └── compileJava/
+│           ├── previous-compilation-data.bin
+│           └── compileTransaction/
+│               ├── backup-dir/
+│               └── stash-dir/
+│
+└── .gradle/                                   # Gradle cache
+    ├── 9.3.0/
+    ├── buildOutputCleanup/
+    ├── vcs-1/
+    └── file-system.probe
+
+================================================================================
+MODULE STRUCTURE BREAKDOWN
+================================================================================
+
+Each module (cars, owners, agents, registration) follows Hexagonal Architecture:
+
+┌─────────────────────────────────────────────────────────────┐
+│                         MODULE                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────────────────────────────────┐          │
+│  │              DOMAIN LAYER                     │          │
+│  │  - Pure business logic (no dependencies)     │          │
+│  │  - Aggregates, Value Objects, Entities       │          │
+│  │  - Domain Exceptions                         │          │
+│  │  - Enums                                      │          │
+│  └──────────────────────────────────────────────┘          │
+│                         ▲                                    │
+│                         │                                    │
+│  ┌──────────────────────────────────────────────┐          │
+│  │          APPLICATION LAYER                    │          │
+│  │  - Use cases / Application services          │          │
+│  │  - Ports (interfaces for adapters)           │          │
+│  │  - Application Exceptions                    │          │
+│  │  - Orchestration logic                       │          │
+│  └──────────────────────────────────────────────┘          │
+│           ▲                              ▲                   │
+│           │                              │                   │
+│  ┌────────────────┐         ┌────────────────────┐         │
+│  │ INFRASTRUCTURE │         │    API LAYER        │         │
+│  │  - JPA Entities│         │  - Controllers      │         │
+│  │  - Repositories│         │  - DTOs             │         │
+│  │  - Adapters    │         │  - Mappers          │         │
+│  │  - ACL (for    │         │  - Exception        │         │
+│  │    Registration│         │    Handlers         │         │
+│  │    module)     │         │                     │         │
+│  └────────────────┘         └────────────────────┘         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+
+================================================================================
+DATABASE SCHEMA (H2 in-memory for dev, PostgreSQL for production)
+================================================================================
+
+Tables created by Flyway migration (V1__init.sql):
+
+1. vehicles
+   - id (VARCHAR PRIMARY KEY)
+   - vin (VARCHAR UNIQUE NOT NULL)
+   - make (VARCHAR NOT NULL)
+   - model (VARCHAR NOT NULL)
+   - vehicle_year (INT NOT NULL)
+   - status (VARCHAR NOT NULL)
+
+2. owners
+   - id (VARCHAR PRIMARY KEY)
+   - full_name (VARCHAR NOT NULL)
+   - address (VARCHAR)
+   - status (VARCHAR NOT NULL)
+
+3. agents
+   - id (VARCHAR PRIMARY KEY)
+   - name (VARCHAR NOT NULL)
+   - role (VARCHAR NOT NULL)
+   - status (VARCHAR NOT NULL)
+
+4. registrations
+   - id (VARCHAR PRIMARY KEY)
+   - vehicle_id (VARCHAR FOREIGN KEY -> vehicles.id)
+   - owner_id (VARCHAR FOREIGN KEY -> owners.id)
+   - agent_id (VARCHAR FOREIGN KEY -> agents.id)
+   - plate_number (VARCHAR UNIQUE NOT NULL)
+   - expiry_date (DATE NOT NULL)
+   - status (VARCHAR NOT NULL)
+
+================================================================================
+KEY ARCHITECTURAL PATTERNS
+================================================================================
+
+1. HEXAGONAL ARCHITECTURE (Ports & Adapters)
+   - Domain at the center (no external dependencies)
+   - Application layer defines ports (interfaces)
+   - Infrastructure/API layers are adapters
+
+2. DOMAIN-DRIVEN DESIGN (DDD)
+   - Bounded Contexts: cars, owners, agents, registration
+   - Aggregates: Vehicle, Owner, Agent, Registration
+   - Value Objects: VehicleId, Vin, OwnerId, FullName, etc.
+   - Domain Events: (Can be added for event-driven communication)
+
+3. ANTI-CORRUPTION LAYER (ACL)
+   - Registration module uses ACL adapters to communicate with other modules
+   - Prevents tight coupling between bounded contexts
+   - Adapters: VehicleEligibilityAdapter, OwnerEligibilityAdapter, AgentEligibilityAdapter
+
+4. REPOSITORY PATTERN
+   - Port: *RepositoryPort interfaces in application layer
+   - Adapter: Jpa*RepositoryAdapter in infrastructure layer
+   - Spring Data JPA: SpringData*Repository interfaces
+
+5. MAPPER PATTERN
+   - Domain <-> DTO mapping in API layer
+   - Keeps domain models isolated from HTTP concerns
+
+6. EXCEPTION HANDLING
+   - Domain exceptions: Business rule violations
+   - Application exceptions: Use case failures
+   - Global handler: shared/web/GlobalExceptionHandler
+   - Module-specific handlers: *ExceptionHandler in each API layer
+
+================================================================================
+API ENDPOINTS (REST)
+================================================================================
+
+VEHICLES (cars module):
+  POST   /api/cars                    - Create vehicle
+  GET    /api/cars/{id}               - Get vehicle by ID
+  GET    /api/cars                    - List all vehicles
+  PUT    /api/cars/{id}               - Update vehicle specs
+  POST   /api/cars/{id}/activate      - Activate vehicle
+  DELETE /api/cars/{id}               - Delete vehicle
+
+OWNERS (owners module):
+  POST   /api/owners                  - Create owner
+  GET    /api/owners/{id}             - Get owner by ID
+  GET    /api/owners                  - List all owners
+  PUT    /api/owners/{id}             - Update owner
+  POST   /api/owners/{id}/activate    - Activate owner
+  POST   /api/owners/{id}/suspend     - Suspend owner
+  DELETE /api/owners/{id}             - Delete owner
+
+AGENTS (agents module):
+  POST   /api/agents                  - Create agent
+  GET    /api/agents/{id}             - Get agent by ID
+  GET    /api/agents                  - List all agents
+  PUT    /api/agents/{id}             - Update agent
+  POST   /api/agents/{id}/activate    - Activate agent
+  DELETE /api/agents/{id}             - Delete agent
+
+REGISTRATIONS (registration module):
+  POST   /api/registrations           - Register vehicle
+  GET    /api/registrations/{id}      - Get registration by ID
+  GET    /api/registrations           - List all registrations
+  POST   /api/registrations/{id}/renew - Renew registration
+  POST   /api/registrations/{id}/cancel - Cancel registration
+  DELETE /api/registrations/{id}      - Delete registration
+
+================================================================================
+CONFIGURATION FILES
+================================================================================
+
+application.yml:
+  - Database configuration (H2 in-memory)
+  - JPA/Hibernate settings
+  - Flyway migration settings
+  - H2 Console enabled
+  - Server port: 8080
+  - Swagger/OpenAPI settings
+  - Logging configuration
+
+build.gradle:
+  - Spring Boot 4.0.2
+  - Dependencies: Spring Data JPA, Flyway, H2, PostgreSQL, Validation, Web MVC
+  - Lombok for boilerplate reduction
+  - SpringDoc for OpenAPI/Swagger
+  - Dev tools for auto-restart
+
+================================================================================
+DEVELOPMENT TOOLS
+================================================================================
+
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- H2 Console: http://localhost:8080/h2-console
+  - JDBC URL: jdbc:h2:mem:vrms-db
+  - Username: sa
+  - Password: (empty)
+
+================================================================================
+BUILD & RUN
+================================================================================
+
+Windows (PowerShell):
+  .\gradlew clean build
+  .\gradlew bootRun
+
+Unix/Mac:
+  ./gradlew clean build
+  ./gradlew bootRun
+
+================================================================================
+PROJECT CONVENTIONS
+================================================================================
+
+1. Package naming: com.champsoft.vrms.modules.{module}.{layer}
+2. Class naming:
+   - Entities: {Name}JpaEntity
+   - Repositories: SpringData{Name}Repository, Jpa{Name}RepositoryAdapter
+   - Services: {Name}CrudService, {Name}EligibilityService
+   - Controllers: {Name}Controller
+   - DTOs: {Action}{Name}Request/Response
+   - Mappers: {Name}ApiMapper
+   - Exceptions: {Description}Exception
+
+3. Layer responsibilities:
+   - Domain: Business logic, no framework dependencies
+   - Application: Use cases, orchestration, port definitions
+   - Infrastructure: Database, external services, adapters
+   - API: HTTP layer, DTOs, controllers, exception handling
+
+4. Module independence:
+   - Each module is self-contained
+   - Cross-module communication through ports/adapters (ACL)
+   - No direct dependencies between modules
+
+================================================================================
+NOTES
+================================================================================
+
+- The project uses Spring Modulith principles for modular monolith architecture
+- Database migrations are managed by Flyway (version-controlled SQL scripts)
+- H2 is used for development; PostgreSQL for production
+- All JPA entities use public fields for simplicity (can be refactored)
+- Value Objects enforce domain invariants through validation
+- The registration module orchestrates cross-module operations
+- ACL adapters ensure loose coupling between bounded contexts
+
+================================================================================
+

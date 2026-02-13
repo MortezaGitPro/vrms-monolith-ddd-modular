@@ -1,0 +1,6 @@
+Windows:
+powershell -ExecutionPolicy Bypass -File project-structure.ps1
+
+MacOS/Linux:
+chmod +x project-structure.sh
+./project-structure.sh
