@@ -1,0 +1,27 @@
+services:
+
+  vrms-postgres:
+    image: postgres:18.3
+    container_name: vrms-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: vrms_db
+      POSTGRES_USER: vrms
+      POSTGRES_PASSWORD: vrms
+    volumes:
+      - vrms_pg_data:/var/lib/postgresql
+
+  vrms-app:
+    image: vrms:1.0
+    container_name: vrms-pg
+    depends_on:
+      - vrms-postgres
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: pg
+      POSTGRES_HOST: vrms-postgres
+
+volumes:
+  vrms_pg_data:
