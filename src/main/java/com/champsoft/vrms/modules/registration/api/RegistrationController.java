@@ -3,10 +3,13 @@ package com.champsoft.vrms.modules.registration.api;
 import com.champsoft.vrms.modules.registration.api.dto.*;
 import com.champsoft.vrms.modules.registration.api.mapper.RegistrationApiMapper;
 import com.champsoft.vrms.modules.registration.application.service.*;
-
 import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/registrations")
@@ -14,38 +17,55 @@ public class RegistrationController {
 
     private final RegistrationOrchestrator orchestrator;
     private final RegistrationCrudService crud;
+    private final RegistrationRepresentationAssembler assembler;
 
-    public RegistrationController(RegistrationOrchestrator orchestrator, RegistrationCrudService crud) {
+    public RegistrationController(
+            RegistrationOrchestrator orchestrator,
+            RegistrationCrudService crud,
+            RegistrationRepresentationAssembler assembler
+    ) {
         this.orchestrator = orchestrator;
         this.crud = crud;
+        this.assembler = assembler;
     }
 
     @PostMapping
-    public ResponseEntity<?> register(@RequestBody @Valid RegisterVehicleRequest req) {
+    public ResponseEntity<EntityModel<RegistrationResponse>> register(@RequestBody @Valid RegisterVehicleRequest req) {
         var reg = orchestrator.register(req.vehicleId(), req.ownerId(), req.agentId(), req.plate(), req.expiry());
-        return ResponseEntity.ok(RegistrationApiMapper.toResponse(reg));
+        var response = RegistrationApiMapper.toResponse(reg);
+        return ResponseEntity.ok(assembler.toModel(response));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable String id) {
-        return ResponseEntity.ok(RegistrationApiMapper.toResponse(crud.get(id)));
+    public ResponseEntity<EntityModel<RegistrationResponse>> get(@PathVariable String id) {
+        var response = RegistrationApiMapper.toResponse(crud.get(id));
+        return ResponseEntity.ok(assembler.toModel(response));
     }
 
     @GetMapping
-    public ResponseEntity<?> list() {
-        return ResponseEntity.ok(crud.list().stream().map(RegistrationApiMapper::toResponse).toList());
+    public ResponseEntity<CollectionModel<EntityModel<RegistrationResponse>>> list() {
+        List<RegistrationResponse> responses = crud.list().stream()
+                .map(RegistrationApiMapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(assembler.toCollectionModel(responses));
     }
 
     @PostMapping("/{id}/renew")
-    public ResponseEntity<?> renew(@PathVariable String id, @RequestBody @Valid RenewRegistrationRequest req) {
+    public ResponseEntity<EntityModel<RegistrationResponse>> renew(
+            @PathVariable String id,
+            @RequestBody @Valid RenewRegistrationRequest req
+    ) {
         var reg = crud.renew(id, req.newExpiry());
-        return ResponseEntity.ok(RegistrationApiMapper.toResponse(reg));
+        var response = RegistrationApiMapper.toResponse(reg);
+        return ResponseEntity.ok(assembler.toModel(response));
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<?> cancel(@PathVariable String id) {
+    public ResponseEntity<EntityModel<RegistrationResponse>> cancel(@PathVariable String id) {
         var reg = crud.cancel(id);
-        return ResponseEntity.ok(RegistrationApiMapper.toResponse(reg));
+        var response = RegistrationApiMapper.toResponse(reg);
+        return ResponseEntity.ok(assembler.toModel(response));
     }
 
     @DeleteMapping("/{id}")

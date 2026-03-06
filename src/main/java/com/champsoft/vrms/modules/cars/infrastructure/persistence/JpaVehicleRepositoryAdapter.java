@@ -1,8 +1,10 @@
 package com.champsoft.vrms.modules.cars.infrastructure.persistence;
 
 import com.champsoft.vrms.modules.cars.application.port.out.VehicleRepositoryPort;
-import com.champsoft.vrms.modules.cars.domain.model.*;
-
+import com.champsoft.vrms.modules.cars.domain.model.Vehicle;
+import com.champsoft.vrms.modules.cars.domain.model.VehicleId;
+import com.champsoft.vrms.modules.cars.domain.model.VehicleSpecs;
+import com.champsoft.vrms.modules.cars.domain.model.Vin;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -53,9 +55,11 @@ public class JpaVehicleRepositoryAdapter implements VehicleRepositoryPort {
         var e = new VehicleJpaEntity();
         e.id = v.id().value();
         e.vin = v.vin().value();
-        e.make = v.specs().make();
-        e.model = v.specs().model();
-        e.vehicle_year = v.specs().year();
+        e.specs = new VehicleSpecsEmbeddable(
+                v.specs().make(),
+                v.specs().model(),
+                v.specs().year()
+        );
         e.status = v.status().name();
         return e;
     }
@@ -64,12 +68,17 @@ public class JpaVehicleRepositoryAdapter implements VehicleRepositoryPort {
         var vehicle = new Vehicle(
                 VehicleId.of(e.id),
                 new Vin(e.vin),
-                new VehicleSpecs(e.make, e.model, e.vehicle_year)
+                new VehicleSpecs(
+                        e.specs.make,
+                        e.specs.model,
+                        e.specs.year
+                )
         );
-        // set status
+
         if ("ACTIVE".equalsIgnoreCase(e.status)) {
             vehicle.activate();
         }
+
         return vehicle;
     }
 }
