@@ -1,5 +1,7 @@
 package com.champsoft.vrms.modules.registration.domain.model;
 
+import com.champsoft.vrms.modules.registration.domain.exception.ExpiryDateMustBeFutureException;
+
 public class Registration {
     private final RegistrationId id;
     private final VehicleRef vehicleId;
@@ -37,7 +39,12 @@ public class Registration {
     public java.time.LocalDate expiryValue() { return expiry.value(); }
 
     public void renew(ExpiryDate newExpiry) {
-        if (status != RegistrationStatus.ACTIVE) throw new RuntimeException("Registration not ACTIVE");
+        if (status != RegistrationStatus.ACTIVE) {
+            throw new RuntimeException("Registration not ACTIVE");
+        }
+        if (!newExpiry.isFuture()) {
+            throw new ExpiryDateMustBeFutureException("Expiry must be in the future");
+        }
         this.expiry = newExpiry;
     }
 
